@@ -214,7 +214,7 @@ function Result() {
                 </h2>
 
                 <p>
-                    {result.summary}
+                    {result?.summary || "No summary available"}
                 </p>
 
             </div>
@@ -226,7 +226,7 @@ function Result() {
                 </h2>
 
                 <p>
-                    {result.techStack}
+                    {result?.techStack || "No tech stack available"}
                 </p>
 
             </div>
@@ -238,7 +238,7 @@ function Result() {
                 </h2>
 
                 <p>
-                    {result.architecture}
+                    {result?.architecture || "No architecture available"}
                 </p>
 
             </div>
@@ -250,7 +250,7 @@ function Result() {
                 </h2>
 
                 <p>
-                    {result.setupInstructions}
+                    {result?.beginnerExplanation || "No explanation available"}
                 </p>
 
             </div>

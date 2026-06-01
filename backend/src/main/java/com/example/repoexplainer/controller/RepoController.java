@@ -16,6 +16,10 @@ import com.example.repoexplainer.dto.FileNode;
 import java.util.List;
 
 import com.example.repoexplainer.dto.FileContentRequest;
+import com.example.repoexplainer.service.EmbeddingService;
+import com.example.repoexplainer.service.RagService;
+
+import com.example.repoexplainer.dto.EmbeddingChunk;
 
 @RestController
 @RequestMapping("/api/repo")
@@ -23,13 +27,25 @@ import com.example.repoexplainer.dto.FileContentRequest;
 public class RepoController {
 
     private final GitHubService gitHubService;
+    
+    private final RagService ragService;
 
     public RepoController(
-            GitHubService gitHubService
-    ) {
 
-        this.gitHubService = gitHubService;
-    }
+        GitHubService gitHubService,
+
+        
+        RagService ragService
+) {
+
+    this.gitHubService =
+            gitHubService;
+
+    
+
+    this.ragService =
+            ragService;
+}
 
     @GetMapping("/health")
     public String health() {
@@ -87,21 +103,26 @@ public class RepoController {
         }    
 
     @PostMapping("/chat")
-    public ChatResponse chatWithRepository(
-            @RequestBody ChatRequest request
-    ) {
+public String chatWithRepository(
 
-        String answer =
-                gitHubService.chatWithRepository(
-                        request.getRepoUrl(),
-                        request.getQuestion(),
-                        request.isRepositoryMode()
-                );
+        @RequestBody ChatRequest request
+) {
 
-        return ChatResponse.builder()
-                .answer(answer)
-                .build();
+    if (!request.isRepositoryMode()) {
+
+        return gitHubService.chatWithRepository(
+                request.getRepoUrl(),
+                request.getQuestion(),
+                false
+        );
     }
+
+    return ragService.chatWithRepository(
+            request.getQuestion()
+    );
+}
+
+    
 
     @PostMapping("/explain-file")
 public String explainFile(
@@ -111,6 +132,31 @@ public String explainFile(
     return gitHubService.explainFile(
             request.getRepoUrl(),
             request.getFilePath()
+    );
+}
+
+@PostMapping("/process-repository")
+public String processRepository(
+
+        @RequestBody RepoAnalyzeRequest request
+) {
+
+    ragService.processRepository(
+            request.getRepoUrl()
+    );
+
+    return "Chunks created: "
+            + ragService.getChunkCount();
+}
+
+@PostMapping("/search")
+public List<EmbeddingChunk> search(
+
+        @RequestBody ChatRequest request
+) {
+
+    return ragService.searchRelevantChunks(
+            request.getQuestion()
     );
 }
 }

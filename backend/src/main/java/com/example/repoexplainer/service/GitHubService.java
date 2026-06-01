@@ -10,11 +10,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 
+
+
+
 import com.example.repoexplainer.dto.FileNode;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class GitHubService {
@@ -23,14 +33,27 @@ public class GitHubService {
 
     private final OllamaService ollamaService;
 
-    public GitHubService(
-            RestTemplate restTemplate,
-            OllamaService ollamaService
-    ) {
+    
+    @Value("${github.token}")
+private String githubToken;
 
-        this.restTemplate = restTemplate;
-        this.ollamaService = ollamaService;
-    }
+    public GitHubService(
+
+        RestTemplate restTemplate,
+
+        OllamaService ollamaService
+
+        
+) {
+
+    this.restTemplate =
+            restTemplate;
+
+    this.ollamaService =
+            ollamaService;
+
+    
+}
 
     public String getRepositoryInfo(
             String repoUrl
@@ -57,18 +80,41 @@ public class GitHubService {
 
     String repo = parts[1];
 
+    String defaultBranch =
+            getDefaultBranch(
+                    owner,
+                    repo
+            );
+
     String contentsApiUrl =
             "https://api.github.com/repos/"
                     + owner
                     + "/"
                     + repo
-                    + "/git/trees/main?recursive=1";
+                    + "/git/trees/"
+                    + defaultBranch
+                    + "?recursive=1";
 
-    Map<String, Object> response =
-            restTemplate.getForObject(
+    HttpEntity<String> entity =
+            new HttpEntity<>(
+                    createHeaders()
+            );
+
+    ResponseEntity<Map> responseEntity =
+            restTemplate.exchange(
                     contentsApiUrl,
+                    HttpMethod.GET,
+                    entity,
                     Map.class
             );
+
+    Map<String, Object> response =
+            responseEntity.getBody();
+
+    if (response == null) {
+
+        return new ArrayList<>();
+    }
 
     List<Map<String, Object>> tree =
             (List<Map<String, Object>>)
@@ -100,6 +146,54 @@ public class GitHubService {
     }
 
     return root.getChildren();
+}
+
+private String getDefaultBranch(
+
+        String owner,
+
+        String repo
+) {
+
+    try {
+
+        String repoApiUrl =
+                "https://api.github.com/repos/"
+                        + owner
+                        + "/"
+                        + repo;
+
+        HttpEntity<String> entity =
+                new HttpEntity<>(
+                        createHeaders()
+                );
+
+        ResponseEntity<Map> responseEntity =
+                restTemplate.exchange(
+                        repoApiUrl,
+                        HttpMethod.GET,
+                        entity,
+                        Map.class
+                );
+
+        Map<String, Object> response =
+                responseEntity.getBody();
+
+        if (response == null) {
+
+            return "master";
+        }
+
+        return response
+                .get("default_branch")
+                .toString();
+
+    } catch (Exception error) {
+
+        error.printStackTrace();
+
+        return "master";
+    }
 }
 
 
@@ -179,7 +273,9 @@ private void addPathToTree(
 }
 
 public String getFileContent(
+
         String repoUrl,
+
         String filePath
 ) {
 
@@ -194,43 +290,40 @@ public String getFileContent(
 
         String repo = parts[1];
 
-        String fileApiUrl =
-                "https://api.github.com/repos/"
+        String defaultBranch =
+                getDefaultBranch(
+                        owner,
+                        repo
+                );
+
+        String apiUrl =
+                "https://raw.githubusercontent.com/"
                         + owner
                         + "/"
                         + repo
-                        + "/contents/"
+                        + "/"
+                        + defaultBranch
+                        + "/"
                         + filePath;
 
-        Map<String, Object> response =
-                restTemplate.getForObject(
-                        fileApiUrl,
-                        Map.class
+        HttpEntity<String> entity =
+                new HttpEntity<>(
+                        createHeaders()
                 );
 
-        String encodedContent =
-                String.valueOf(
-                        response.get("content")
+        ResponseEntity<String> response =
+                restTemplate.exchange(
+                        apiUrl,
+                        HttpMethod.GET,
+                        entity,
+                        String.class
                 );
 
-        encodedContent =
-                encodedContent.replace(
-                        "\n",
-                        ""
-                );
-
-        byte[] decodedBytes =
-                Base64.getDecoder()
-                        .decode(
-                                encodedContent
-                        );
-
-        return new String(
-                decodedBytes,
-                StandardCharsets.UTF_8
-        );
+        return response.getBody();
 
     } catch (Exception error) {
+
+        error.printStackTrace();
 
         return "Unable to load file content.";
     }
@@ -284,41 +377,19 @@ public String explainFile(
 }
 
     public String chatWithRepository(
-            String repoUrl,
-            String question,
-            boolean repositoryMode
-    ) {
 
-        if (!repositoryMode) {
+        String repoUrl,
 
-            return ollamaService.generateChatResponse(
+        String question,
+
+        boolean repositoryMode
+) {
+
+    return ollamaService
+            .generateChatResponse(
                     question
             );
-        }
-
-        String repositoryContent =
-                getRepositoryContent(repoUrl);
-
-        String prompt =
-                """
-                Repository Content:
-                %s
-
-                User Question:
-                %s
-
-                Answer only using repository knowledge.
-                Keep answer short and beginner friendly.
-                """
-                        .formatted(
-                                repositoryContent,
-                                question
-                        );
-
-        return ollamaService.generateChatResponse(
-                prompt
-        );
-    }
+}
 
     private String getRepositoryContent(
             String repoUrl
@@ -407,4 +478,24 @@ public String explainFile(
                         + "\nREADME:\n"
                         + readmeContent;
     }
+
+    private HttpHeaders createHeaders() {
+
+    HttpHeaders headers =
+            new HttpHeaders();
+
+    headers.set(
+            "Authorization",
+            "token " + githubToken
+    );
+
+    headers.set(
+            "Accept",
+            "application/vnd.github+json"
+    );
+
+    return headers;
 }
+}
+
+

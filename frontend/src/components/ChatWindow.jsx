@@ -43,21 +43,25 @@ function ChatWindow({ repoUrl }) {
                         },
 
                         body: JSON.stringify({
+
                             repoUrl,
+
                             question,
-                            mode
+
+                            repositoryMode:
+                                mode === "repo"
                         })
                     }
                 );
 
             const data =
-                await response.json();
+                await response.text();
 
             const botMessage = {
 
                 type: "bot",
 
-                text: data.answer
+                text: data
             };
 
             setMessages((prev) => [
@@ -68,6 +72,18 @@ function ChatWindow({ repoUrl }) {
         } catch (error) {
 
             console.log(error);
+
+            const errorMessage = {
+
+                type: "bot",
+
+                text: "Error while contacting AI backend."
+            };
+
+            setMessages((prev) => [
+                ...prev,
+                errorMessage
+            ]);
         }
     }
 
