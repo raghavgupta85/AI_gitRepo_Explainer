@@ -858,3 +858,20 @@ body.light-theme {
 
     border: 1px solid #ddd;
 }
+/* TREE CHILDREN */
+
+.tree-node {
+
+    width: 100%;
+}
+
+.tree-children {
+
+    margin-left: 25px;
+
+    margin-top: 8px;
+
+    border-left: 2px solid #444;
+
+    padding-left: 12px;
+}

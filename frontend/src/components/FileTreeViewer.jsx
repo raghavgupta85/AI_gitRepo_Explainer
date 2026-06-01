@@ -1,6 +1,106 @@
 import { useEffect, useState } from "react";
 
-function FileTreeViewer({ repoUrl }) {
+function TreeNode({
+
+    node,
+
+    openFile
+
+}) {
+
+    const [expanded, setExpanded] =
+        useState(false);
+
+    const isFolder =
+        node.type === "dir";
+
+    return (
+
+        <div className="tree-node">
+
+            <div
+                className="tree-item"
+
+                onClick={() => {
+
+                    if (isFolder) {
+
+                        setExpanded(
+                            !expanded
+                        );
+
+                    } else {
+
+                        openFile(
+                            node.path
+                        );
+                    }
+                }}
+            >
+
+                <span>
+
+                    {
+                        isFolder
+                            ? (
+                                expanded
+                                    ? "📂"
+                                    : "📁"
+                            )
+                            : "📄"
+                    }
+
+                </span>
+
+                <span className="tree-path">
+
+                    {node.name}
+
+                </span>
+
+            </div>
+
+            {
+                expanded
+                &&
+                node.children
+                &&
+                (
+                    <div className="tree-children">
+
+                        {
+                            node.children.map(
+                                (
+                                    child,
+                                    index
+                                ) => (
+
+                                    <TreeNode
+                                        key={index}
+
+                                        node={child}
+
+                                        openFile={
+                                            openFile
+                                        }
+                                    />
+                                )
+                            )
+                        }
+
+                    </div>
+                )
+            }
+
+        </div>
+    );
+}
+
+function FileTreeViewer({
+
+    repoUrl
+
+}) {
 
     const [files, setFiles] =
         useState([]);
@@ -15,10 +115,10 @@ function FileTreeViewer({ repoUrl }) {
         useState("");
 
     const [fileExplanation, setFileExplanation] =
-    useState("");
+        useState("");
 
     const [explaining, setExplaining] =
-        useState(false);    
+        useState(false);
 
     useEffect(() => {
 
@@ -62,7 +162,9 @@ function FileTreeViewer({ repoUrl }) {
 
     }, [repoUrl]);
 
-    async function openFile(filePath) {
+    async function openFile(
+        filePath
+    ) {
 
         try {
 
@@ -71,6 +173,8 @@ function FileTreeViewer({ repoUrl }) {
             setFileContent(
                 "Loading file..."
             );
+
+            setFileExplanation("");
 
             const response =
                 await fetch(
@@ -107,50 +211,50 @@ function FileTreeViewer({ repoUrl }) {
 
     async function explainSelectedFile() {
 
-    try {
+        try {
 
-        setExplaining(true);
+            setExplaining(true);
 
-        setFileExplanation(
-            "Generating AI explanation..."
-        );
-
-        const response =
-            await fetch(
-                "http://localhost:8080/api/repo/explain-file",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        repoUrl,
-                        filePath: selectedFile
-                    })
-                }
+            setFileExplanation(
+                "Generating AI explanation..."
             );
 
-        const data =
-            await response.text();
+            const response =
+                await fetch(
+                    "http://localhost:8080/api/repo/explain-file",
+                    {
+                        method: "POST",
 
-        setFileExplanation(data);
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
 
-    } catch (error) {
+                        body: JSON.stringify({
+                            repoUrl,
+                            filePath: selectedFile
+                        })
+                    }
+                );
 
-        console.log(error);
+            const data =
+                await response.text();
 
-        setFileExplanation(
-            "Unable to explain file."
-        );
+            setFileExplanation(data);
 
-    } finally {
+        } catch (error) {
 
-        setExplaining(false);
+            console.log(error);
+
+            setFileExplanation(
+                "Unable to explain file."
+            );
+
+        } finally {
+
+            setExplaining(false);
+        }
     }
-}
 
     if (loading) {
 
@@ -178,41 +282,15 @@ function FileTreeViewer({ repoUrl }) {
 
                 {
                     files.map(
-                        (file, index) => (
+                        (node, index) => (
 
-                            <div
+                            <TreeNode
                                 key={index}
-                                className="tree-item"
-                                onClick={() => {
 
-                                    if (
-                                        file.type === "file"
-                                    ) {
+                                node={node}
 
-                                        openFile(
-                                            file.path
-                                        );
-                                    }
-                                }}
-                            >
-
-                                <span>
-
-                                    {
-                                        file.type === "dir"
-                                            ? "📁"
-                                            : "📄"
-                                    }
-
-                                </span>
-
-                                <span className="tree-path">
-
-                                    {file.path}
-
-                                </span>
-
-                            </div>
+                                openFile={openFile}
+                            />
                         )
                     )
                 }
@@ -232,44 +310,48 @@ function FileTreeViewer({ repoUrl }) {
 
                         <pre>
 
-    {fileContent}
+                            {fileContent}
 
-</pre>
+                        </pre>
 
-<button
-    className="explain-button"
-    onClick={explainSelectedFile}
-    disabled={explaining}
->
+                        <button
+                            className="explain-button"
 
-    {
-        explaining
-            ? "Explaining..."
-            : "✨ Explain This File"
-    }
+                            onClick={
+                                explainSelectedFile
+                            }
 
-</button>
+                            disabled={explaining}
+                        >
 
-{
-    fileExplanation && (
+                            {
+                                explaining
+                                    ? "Explaining..."
+                                    : "✨ Explain This File"
+                            }
 
-        <div className="file-explanation">
+                        </button>
 
-            <h3>
+                        {
+                            fileExplanation && (
 
-                AI Explanation
+                                <div className="file-explanation">
 
-            </h3>
+                                    <h3>
 
-            <p>
+                                        AI Explanation
 
-                {fileExplanation}
+                                    </h3>
 
-            </p>
+                                    <p>
 
-        </div>
-    )
-}
+                                        {fileExplanation}
+
+                                    </p>
+
+                                </div>
+                            )
+                        }
 
                     </div>
                 )

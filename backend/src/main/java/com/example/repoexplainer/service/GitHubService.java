@@ -14,7 +14,7 @@ import com.example.repoexplainer.dto.FileNode;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.HashMap;
 
 @Service
 public class GitHubService {
@@ -62,46 +62,120 @@ public class GitHubService {
                     + owner
                     + "/"
                     + repo
-                    + "/contents";
+                    + "/git/trees/main?recursive=1";
 
-    List<Map<String, Object>> response =
+    Map<String, Object> response =
             restTemplate.getForObject(
                     contentsApiUrl,
-                    List.class
+                    Map.class
             );
 
-    List<FileNode> files =
-            new ArrayList<>();
+    List<Map<String, Object>> tree =
+            (List<Map<String, Object>>)
+                    response.get("tree");
 
-    for (Map<String, Object> item : response) {
+    FileNode root =
+            FileNode.builder()
+                    .name("root")
+                    .type("dir")
+                    .build();
 
-        FileNode node =
-                FileNode.builder()
+    for (Map<String, Object> item : tree) {
 
-                        .name(
-                                String.valueOf(
-                                        item.get("name")
-                                )
-                        )
+        String path =
+                String.valueOf(
+                        item.get("path")
+                );
 
-                        .path(
-                                String.valueOf(
-                                        item.get("path")
-                                )
-                        )
+        String type =
+                String.valueOf(
+                        item.get("type")
+                );
 
-                        .type(
-                                String.valueOf(
-                                        item.get("type")
-                                )
-                        )
-
-                        .build();
-
-        files.add(node);
+        addPathToTree(
+                root,
+                path,
+                type
+        );
     }
 
-    return files;
+    return root.getChildren();
+}
+
+
+private void addPathToTree(
+
+        FileNode root,
+
+        String fullPath,
+
+        String githubType
+) {
+
+    String[] parts =
+            fullPath.split("/");
+
+    FileNode current =
+            root;
+
+    String currentPath =
+            "";
+
+    for (int i = 0; i < parts.length; i++) {
+
+        String part = parts[i];
+
+        currentPath +=
+                currentPath.isEmpty()
+                        ? part
+                        : "/" + part;
+
+        boolean isLast =
+                i == parts.length - 1;
+
+        String nodeType =
+                isLast
+                        ? (
+                        githubType.equals("tree")
+                                ? "dir"
+                                : "file"
+                )
+                        : "dir";
+
+        FileNode existing =
+                current.getChildren()
+
+                        .stream()
+
+                        .filter(node ->
+
+                                node.getName()
+                                        .equals(part)
+                        )
+
+                        .findFirst()
+
+                        .orElse(null);
+
+        if (existing == null) {
+
+            existing =
+                    FileNode.builder()
+
+                            .name(part)
+
+                            .path(currentPath)
+
+                            .type(nodeType)
+
+                            .build();
+
+            current.getChildren()
+                    .add(existing);
+        }
+
+        current = existing;
+    }
 }
 
 public String getFileContent(
