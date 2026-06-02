@@ -6,141 +6,116 @@ import java.util.Map;
 public class AIResponseParser {
 
     public static Map<String, String> parse(
-            String text
+            String response
     ) {
 
         Map<String, String> result =
                 new HashMap<>();
 
-        String currentKey = "";
+        response =
+                response.replace("**", "")
+                        .replace("##", "")
+                        .trim();
 
-        StringBuilder currentValue =
-                new StringBuilder();
+        result.put(
+                "summary",
+                extractSection(
+                        response,
+                        "SUMMARY:"
+                )
+        );
 
-        String[] lines =
-                text.split("\n");
+        result.put(
+                "techStack",
+                extractSection(
+                        response,
+                        "TECH_STACK:"
+                )
+        );
 
-        for (String line : lines) {
+        result.put(
+                "architecture",
+                extractSection(
+                        response,
+                        "ARCHITECTURE:"
+                )
+        );
 
-            String upper =
-                    line.toUpperCase();
+        result.put(
+                "setup",
+                extractSection(
+                        response,
+                        "SETUP:"
+                )
+        );
 
-            if (upper.startsWith("SUMMARY")) {
-
-                save(
-                        result,
-                        currentKey,
-                        currentValue
-                );
-
-                currentKey = "summary";
-
-                currentValue =
-                        new StringBuilder();
-            }
-
-            else if (
-                    upper.startsWith(
-                            "TECH_STACK"
-                    )
-            ) {
-
-                save(
-                        result,
-                        currentKey,
-                        currentValue
-                );
-
-                currentKey = "techStack";
-
-                currentValue =
-                        new StringBuilder();
-            }
-
-            else if (
-                    upper.startsWith(
-                            "ARCHITECTURE"
-                    )
-            ) {
-
-                save(
-                        result,
-                        currentKey,
-                        currentValue
-                );
-
-                currentKey =
-                        "architecture";
-
-                currentValue =
-                        new StringBuilder();
-            }
-
-            else if (
-                    upper.startsWith("SETUP")
-            ) {
-
-                save(
-                        result,
-                        currentKey,
-                        currentValue
-                );
-
-                currentKey =
-                        "setup";
-
-                currentValue =
-                        new StringBuilder();
-            }
-
-            else if (
-                    upper.startsWith(
-                            "BEGINNER_EXPLANATION"
-                    )
-            ) {
-
-                save(
-                        result,
-                        currentKey,
-                        currentValue
-                );
-
-                currentKey =
-                        "beginnerExplanation";
-
-                currentValue =
-                        new StringBuilder();
-            }
-
-            else {
-
-                currentValue
-                        .append(line)
-                        .append("\n");
-            }
-        }
-
-        save(
-                result,
-                currentKey,
-                currentValue
+        result.put(
+                "beginnerExplanation",
+                extractSection(
+                        response,
+                        "BEGINNER_EXPLANATION:"
+                )
         );
 
         return result;
     }
 
-    private static void save(
-            Map<String, String> map,
-            String key,
-            StringBuilder value
+    private static String extractSection(
+
+            String text,
+
+            String section
     ) {
 
-        if (!key.isEmpty()) {
+        int start =
+                text.indexOf(section);
 
-            map.put(
-                    key,
-                    value.toString().trim()
-            );
+        if (start == -1) {
+
+            return "";
         }
+
+        start += section.length();
+
+        int end =
+                text.length();
+
+        String[] sections = {
+
+                "SUMMARY:",
+
+                "TECH_STACK:",
+
+                "ARCHITECTURE:",
+
+                "SETUP:",
+
+                "BEGINNER_EXPLANATION:"
+        };
+
+        for (String nextSection : sections) {
+
+            if (nextSection.equals(section)) {
+                continue;
+            }
+
+            int nextIndex =
+                    text.indexOf(
+                            nextSection,
+                            start
+                    );
+
+            if (
+                    nextIndex != -1
+                            &&
+                            nextIndex < end
+            ) {
+
+                end = nextIndex;
+            }
+        }
+
+        return text.substring(start, end)
+                .trim();
     }
 }
