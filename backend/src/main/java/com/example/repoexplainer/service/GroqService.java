@@ -13,36 +13,78 @@ public class GroqService {
     @Value("${GROQ_API_KEY}")
     private String apiKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate =
+            new RestTemplate();
 
-    public String generateResponse(String prompt) {
+    public String generateResponse(
+            String prompt
+    ) {
 
-        String url = "https://api.groq.com/openai/v1/chat/completions";
+        String url =
+                "https://api.groq.com/openai/v1/chat/completions";
 
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers =
+                new HttpHeaders();
 
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(
+                MediaType.APPLICATION_JSON
+        );
 
-        headers.setBearerAuth(apiKey);
+        headers.setBearerAuth(
+                apiKey
+        );
 
-        Map<String, Object> body = new HashMap<>();
+        String finalPrompt =
+                """
+                STRICT RULES:
+                - Return plain text only
+                - No markdown
+                - No bold text
+                - No bullet points
+                - Do not use **
+                - Follow exact formatting
+                - Do not add extra headings
 
-        body.put("model", "llama-3.1-8b-instant");
+                %s
+                """
+                        .formatted(prompt);
 
-        List<Map<String, String>> messages = new ArrayList<>();
+        Map<String, Object> body =
+                new HashMap<>();
 
-        Map<String, String> message = new HashMap<>();
+        body.put(
+                "model",
+                "llama-3.1-8b-instant"
+        );
 
-        message.put("role", "user");
+        List<Map<String, String>> messages =
+                new ArrayList<>();
 
-        message.put("content", prompt);
+        Map<String, String> message =
+                new HashMap<>();
+
+        message.put(
+                "role",
+                "user"
+        );
+
+        message.put(
+                "content",
+                finalPrompt
+        );
 
         messages.add(message);
 
-        body.put("messages", messages);
+        body.put(
+                "messages",
+                messages
+        );
 
         HttpEntity<Map<String, Object>> entity =
-                new HttpEntity<>(body, headers);
+                new HttpEntity<>(
+                        body,
+                        headers
+                );
 
         ResponseEntity<Map> response =
                 restTemplate.exchange(
@@ -53,10 +95,25 @@ public class GroqService {
                 );
 
         Map choice =
-                ((List<Map>) response.getBody().get("choices")).get(0);
+                ((List<Map>)
+                        response.getBody()
+                                .get("choices"))
+                        .get(0);
 
-        Map messageMap = (Map) choice.get("message");
+        Map messageMap =
+                (Map) choice.get("message");
 
-        return messageMap.get("content").toString();
+        String content =
+                messageMap.get("content")
+                        .toString();
+
+        content =
+                content.replace("**", "");
+
+        content =
+                content.replace("##", "");
+
+        return content.trim();
     }
 }
+
