@@ -128,7 +128,7 @@ function FileTreeViewer({
 
                 const response =
                     await fetch(
-                        "http://localhost:8080/api/repo/files",
+                        "https://ai-gitrepo-explainer.onrender.com/api/repo/files",
                         {
                             method: "POST",
 
@@ -178,7 +178,7 @@ function FileTreeViewer({
 
             const response =
                 await fetch(
-                    "http://localhost:8080/api/repo/file-content",
+                    "https://ai-gitrepo-explainer.onrender.com/api/repo/file-content",
                     {
                         method: "POST",
 
@@ -221,7 +221,7 @@ function FileTreeViewer({
 
             const response =
                 await fetch(
-                    "http://localhost:8080/api/repo/explain-file",
+                    "https://ai-gitrepo-explainer.onrender.com/api/repo/explain-file",
                     {
                         method: "POST",
 

@@ -33,7 +33,7 @@ function ChatWindow({ repoUrl }) {
 
             const response =
                 await fetch(
-                    "http://localhost:8080/api/repo/chat",
+                    "https://ai-gitrepo-explainer.onrender.com/api/repo/chat",
                     {
                         method: "POST",
 
