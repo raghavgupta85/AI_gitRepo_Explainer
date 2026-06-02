@@ -31,7 +31,7 @@ public class GitHubService {
 
     private final RestTemplate restTemplate;
 
-    private final OllamaService ollamaService;
+    private final GeminiService geminiService;
 
     
     @Value("${github.token}")
@@ -41,7 +41,7 @@ private String githubToken;
 
         RestTemplate restTemplate,
 
-        OllamaService ollamaService
+        GeminiService geminiService
 
         
 ) {
@@ -49,8 +49,8 @@ private String githubToken;
     this.restTemplate =
             restTemplate;
 
-    this.ollamaService =
-            ollamaService;
+    this.geminiService =
+        geminiService;
 
     
 }
@@ -62,7 +62,7 @@ private String githubToken;
         String repositoryContent =
                 getRepositoryContent(repoUrl);
 
-        return ollamaService.generateExplanation(
+        return geminiService.generateExplanation(
                 repositoryContent
         );
     }
@@ -371,9 +371,9 @@ public String explainFile(
                             shortenedContent
                     );
 
-    return ollamaService.generateChatResponse(
-            prompt
-    );
+    return geminiService.generateExplanation(
+        prompt
+);
 }
 
     public String chatWithRepository(
@@ -385,10 +385,9 @@ public String explainFile(
         boolean repositoryMode
 ) {
 
-    return ollamaService
-            .generateChatResponse(
-                    question
-            );
+    return geminiService.generateExplanation(
+        question
+);
 }
 
     private String getRepositoryContent(
