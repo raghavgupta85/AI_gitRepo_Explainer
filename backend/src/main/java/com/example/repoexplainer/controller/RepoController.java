@@ -16,7 +16,7 @@ import com.example.repoexplainer.dto.FileNode;
 import java.util.List;
 
 import com.example.repoexplainer.dto.FileContentRequest;
-import com.example.repoexplainer.service.EmbeddingService;
+
 import com.example.repoexplainer.service.RagService;
 
 import com.example.repoexplainer.dto.EmbeddingChunk;
