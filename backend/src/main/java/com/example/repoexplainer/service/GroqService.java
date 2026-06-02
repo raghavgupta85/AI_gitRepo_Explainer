@@ -27,7 +27,7 @@ public class GroqService {
 
         Map<String, Object> body = new HashMap<>();
 
-        body.put("model", "llama3-8b-8192");
+        body.put("model", "llama-3.1-8b-instant");
 
         List<Map<String, String>> messages = new ArrayList<>();
 
