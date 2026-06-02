@@ -20,6 +20,7 @@ import com.example.repoexplainer.service.EmbeddingService;
 import com.example.repoexplainer.service.RagService;
 
 import com.example.repoexplainer.dto.EmbeddingChunk;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
 @RequestMapping("/api/repo")
