@@ -31,7 +31,7 @@ public class GitHubService {
 
     private final RestTemplate restTemplate;
 
-    private final GeminiService geminiService;
+    private final GroqService groqService;
 
     
     @Value("${github.token}")
@@ -41,7 +41,7 @@ private String githubToken;
 
         RestTemplate restTemplate,
 
-        GeminiService geminiService
+        GroqService groqService
 
         
 ) {
@@ -49,8 +49,7 @@ private String githubToken;
     this.restTemplate =
             restTemplate;
 
-    this.geminiService =
-        geminiService;
+    this.groqService = groqService;
 
     
 }
@@ -62,7 +61,7 @@ private String githubToken;
         String repositoryContent =
                 getRepositoryContent(repoUrl);
 
-        return geminiService.generateExplanation(
+        return groqService.generateResponse(
                 repositoryContent
         );
     }
@@ -371,7 +370,7 @@ public String explainFile(
                             shortenedContent
                     );
 
-    return geminiService.generateExplanation(
+    return groqService.generateResponse(
         prompt
 );
 }
@@ -385,7 +384,7 @@ public String explainFile(
         boolean repositoryMode
 ) {
 
-    return geminiService.generateExplanation(
+    return groqService.generateResponse(
         question
 );
 }
