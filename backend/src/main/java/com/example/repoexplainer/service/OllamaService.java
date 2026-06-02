@@ -1,17 +1,21 @@
+
 package com.example.repoexplainer.service;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class OllamaService {
 
-    private static final String OLLAMA_API_URL =
-            "http://localhost:11434/api/generate";
-
     private final RestTemplate restTemplate;
+
+    @Value("${groq.api.key}")
+    private String groqApiKey;
 
     public OllamaService(
             RestTemplate restTemplate
@@ -56,23 +60,7 @@ public class OllamaService {
                 """
                         .formatted(repositoryContent);
 
-        Map<String, Object> requestBody =
-                Map.of(
-                        "model", "llama3.2:1b",
-                        "prompt", prompt,
-                        "stream", false
-                );
-
-        Map response =
-                restTemplate.postForObject(
-                        OLLAMA_API_URL,
-                        requestBody,
-                        Map.class
-                );
-
-        return String.valueOf(
-                response.get("response")
-        );
+        return callGroq(prompt);
     }
 
     public String generateChatResponse(
@@ -81,12 +69,12 @@ public class OllamaService {
 
         String finalPrompt =
                 """
-                You are a helpful AI assistant.
+                You are an expert repository AI assistant.
 
                 Rules:
-                - Give direct natural answers.
-                - Do NOT generate SUMMARY, TECH_STACK, ARCHITECTURE.
-                - Do NOT use markdown.
+                - Answer naturally.
+                - Use repository context only.
+                - Mention file names if possible.
                 - Keep answers short.
                 - Maximum 5 lines.
 
@@ -95,24 +83,62 @@ public class OllamaService {
                 """
                         .formatted(prompt);
 
+        return callGroq(finalPrompt);
+    }
+
+    private String callGroq(
+            String prompt
+    ) {
+
+        String url =
+                "https://api.groq.com/openai/v1/chat/completions";
+
+        HttpHeaders headers =
+                new HttpHeaders();
+
+        headers.setContentType(
+                MediaType.APPLICATION_JSON
+        );
+
+        headers.setBearerAuth(
+                groqApiKey
+        );
+
         Map<String, Object> requestBody =
                 Map.of(
-                        "model", "llama3.2:1b",
-                        "prompt", finalPrompt,
-                        "stream", false
+                        "model", "llama-3.1-8b-instant",
+                        "messages", List.of(
+                                Map.of(
+                                        "role", "user",
+                                        "content", prompt
+                                )
+                        )
+                );
+
+        HttpEntity<Map<String, Object>> entity =
+                new HttpEntity<>(
+                        requestBody,
+                        headers
                 );
 
         Map response =
                 restTemplate.postForObject(
-                        OLLAMA_API_URL,
-                        requestBody,
+                        url,
+                        entity,
                         Map.class
                 );
 
+        List choices =
+                (List) response.get("choices");
+
+        Map firstChoice =
+                (Map) choices.get(0);
+
+        Map message =
+                (Map) firstChoice.get("message");
+
         return String.valueOf(
-                response.get("response")
+                message.get("content")
         ).trim();
     }
 }
-
-// i am raghav

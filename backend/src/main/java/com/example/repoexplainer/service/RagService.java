@@ -13,7 +13,7 @@ public class RagService {
 
     private final GitHubService gitHubService;
 
-    private final EmbeddingService embeddingService;
+    
 
     private final OllamaService ollamaService;
 
@@ -26,7 +26,6 @@ public class RagService {
 
         GitHubService gitHubService,
 
-        EmbeddingService embeddingService,
 
         OllamaService ollamaService
 ) {
@@ -34,8 +33,7 @@ public class RagService {
     this.gitHubService =
             gitHubService;
 
-    this.embeddingService =
-            embeddingService;
+    
 
     this.ollamaService =
             ollamaService;
@@ -187,11 +185,7 @@ public class RagService {
 
             for (String chunk : chunks) {
 
-                List<Double> embedding =
-                        embeddingService
-                                .generateEmbedding(
-                                        chunk
-                                );
+
 
                 EmbeddingChunk embeddingChunk =
                         EmbeddingChunk.builder()
@@ -200,8 +194,7 @@ public class RagService {
 
                                 .content(chunk)
 
-                                .embedding(embedding)
-
+                                
                                 .build();
 
                 chunkStore.add(
@@ -252,88 +245,38 @@ public class RagService {
         return chunkStore.size();
     }
 
-    private double cosineSimilarity(
+    
 
-            List<Double> vectorA,
 
-            List<Double> vectorB
-    ) {
+public List<EmbeddingChunk> searchRelevantChunks(
+        String question
+) {
 
-        double dotProduct = 0.0;
+    List<String> keywords =
+            List.of(
+                    question
+                            .toLowerCase()
+                            .split(" ")
+            );
 
-        double normA = 0.0;
+    return chunkStore.stream()
 
-        double normB = 0.0;
+            .filter(chunk -> {
 
-        for (
-                int i = 0;
-                i < vectorA.size();
-                i++
-        ) {
+                String content =
+                        chunk.getContent()
+                                .toLowerCase();
 
-            dotProduct +=
-                    vectorA.get(i)
-                            *
-                            vectorB.get(i);
+                return keywords.stream()
+                        .anyMatch(content::contains);
+            })
 
-            normA +=
-                    Math.pow(
-                            vectorA.get(i),
-                            2
-                    );
+            .limit(8)
 
-            normB +=
-                    Math.pow(
-                            vectorB.get(i),
-                            2
-                    );
-        }
+            .toList();
+}
 
-        return dotProduct
-                /
-                (
-                        Math.sqrt(normA)
-                                *
-                                Math.sqrt(normB)
-                );
-    }
 
-    public List<EmbeddingChunk> searchRelevantChunks(
-
-            String question
-    ) {
-
-        List<Double> questionEmbedding =
-                embeddingService.generateEmbedding(
-                        question
-                );
-
-        return chunkStore.stream()
-
-                .sorted((a, b) -> {
-
-                    double similarityA =
-                            cosineSimilarity(
-                                    questionEmbedding,
-                                    a.getEmbedding()
-                            );
-
-                    double similarityB =
-                            cosineSimilarity(
-                                    questionEmbedding,
-                                    b.getEmbedding()
-                            );
-
-                    return Double.compare(
-                            similarityB,
-                            similarityA
-                    );
-                })
-
-                .limit(8)
-
-                .toList();
-    }
     public String chatWithRepository(
 
         String question
