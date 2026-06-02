@@ -389,47 +389,47 @@ public String explainFile(
 );
 }
 
-    private String getRepositoryContent(
-            String repoUrl
-    ) {
+    private String getRepositoryContent(String repoUrl) {
 
-        String[] parts =
-                GitHubUrlParser.extractOwnerAndRepo(
-                        repoUrl
-                );
+    String[] parts =
+            GitHubUrlParser.extractOwnerAndRepo(repoUrl);
 
-        String owner = parts[0];
+    String owner = parts[0];
 
-        String repo = parts[1];
+    String repo = parts[1];
 
-        String repoApiUrl =
-                "https://api.github.com/repos/"
-                        + owner
-                        + "/"
-                        + repo;
+    String repoApiUrl =
+            "https://api.github.com/repos/"
+                    + owner
+                    + "/"
+                    + repo;
 
-        Map repoResponse =
-                restTemplate.getForObject(
-                        repoApiUrl,
-                        Map.class
-                );
+    Map repoResponse =
+            restTemplate.getForObject(
+                    repoApiUrl,
+                    Map.class
+            );
 
-        String description =
-                String.valueOf(
-                        repoResponse.get("description")
-                );
+    String description =
+            String.valueOf(
+                    repoResponse.get("description")
+            );
 
-        String language =
-                String.valueOf(
-                        repoResponse.get("language")
-                );
+    String language =
+            String.valueOf(
+                    repoResponse.get("language")
+            );
 
-        String readmeApiUrl =
-                "https://api.github.com/repos/"
-                        + owner
-                        + "/"
-                        + repo
-                        + "/readme";
+    String readmeApiUrl =
+            "https://api.github.com/repos/"
+                    + owner
+                    + "/"
+                    + repo
+                    + "/readme";
+
+    String readmeContent = "";
+
+    try {
 
         Map readmeResponse =
                 restTemplate.getForObject(
@@ -449,33 +449,34 @@ public String explainFile(
                 Base64.getDecoder()
                         .decode(encodedContent);
 
-        String readmeContent =
+        readmeContent =
                 new String(
                         decodedBytes,
                         StandardCharsets.UTF_8
                 );
 
         readmeContent =
-                ReadmeCleaner.clean(
-                        readmeContent
-                );
+                ReadmeCleaner.clean(readmeContent);
 
-        if (readmeContent.length() > 3000) {
+    } catch (Exception e) {
 
-            readmeContent =
-                    readmeContent.substring(
-                            0,
-                            3000
-                    );
-        }
-
-        return
-                "Repository: " + repo
-                        + "\nDescription: " + description
-                        + "\nMain Language: " + language
-                        + "\nREADME:\n"
-                        + readmeContent;
+        readmeContent = "README not available.";
     }
+
+    // VERY IMPORTANT LIMIT
+    if (readmeContent.length() > 1500) {
+
+        readmeContent =
+                readmeContent.substring(0, 1500);
+    }
+
+    return
+            "Repository: " + repo
+                    + "\nDescription: " + description
+                    + "\nMain Language: " + language
+                    + "\nREADME:\n"
+                    + readmeContent;
+}
 
     private HttpHeaders createHeaders() {
 
