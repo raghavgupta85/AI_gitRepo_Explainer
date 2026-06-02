@@ -54,17 +54,53 @@ private String githubToken;
     
 }
 
-    public String getRepositoryInfo(
-            String repoUrl
-    ) {
+public String getRepositoryInfo(
+        String repoUrl
+) {
 
-        String repositoryContent =
-                getRepositoryContent(repoUrl);
+    String repositoryContent =
+            getRepositoryContent(repoUrl);
 
-        return groqService.generateResponse(
-                repositoryContent
-        );
-    }
+    String prompt =
+            """
+            Analyze this GitHub repository.
+
+            STRICT RULES:
+            - Return plain text only
+            - No markdown
+            - No bold text
+            - No bullet points
+            - Follow exact format
+            - Keep answers concise
+
+            RESPONSE FORMAT:
+
+            SUMMARY:
+            short repository summary
+
+            TECH_STACK:
+            technologies used
+
+            ARCHITECTURE:
+            project architecture explanation
+
+            SETUP:
+            setup instructions
+
+            BEGINNER_EXPLANATION:
+            beginner friendly explanation
+
+            REPOSITORY CONTENT:
+            %s
+            """
+                    .formatted(repositoryContent);
+
+    return groqService.generateResponse(
+            prompt
+    );
+}
+
+
 
     public List<FileNode> getRepositoryFiles(
         String repoUrl
