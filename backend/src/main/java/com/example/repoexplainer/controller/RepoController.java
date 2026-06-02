@@ -23,7 +23,7 @@ import com.example.repoexplainer.dto.EmbeddingChunk;
 
 @RestController
 @RequestMapping("/api/repo")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://ai-git-repo-explainer.vercel.app")
 public class RepoController {
 
     private final GitHubService gitHubService;
